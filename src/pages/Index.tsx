@@ -31,7 +31,7 @@ const Index = () => {
   const atHomeCount = items.filter((i) => i.status === "at-home").length;
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-lg flex-col bg-background safe-bottom">
+    <>
       {/* Header */}
       <header className="px-4 pt-6 pb-2">
         <div className="flex items-center gap-3">
@@ -156,7 +156,7 @@ const Index = () => {
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </>
   );
 };
 

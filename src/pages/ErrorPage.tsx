@@ -1,7 +1,7 @@
 import { useLocation } from "react-router";
 import { useEffect } from "react";
 
-const NotFound = () => {
+const ErrorPage = () => {
   const location = useLocation();
 
   useEffect(() => {
@@ -21,4 +21,4 @@ const NotFound = () => {
   );
 };
 
-export default NotFound;
+export default ErrorPage;
