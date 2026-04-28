@@ -10,7 +10,7 @@ interface AddItemFormProps {
 
 export function AddItemForm({ onAdd, suggestions }: AddItemFormProps) {
   const [name, setName] = useState("");
-  const [category, setCategory] = useState<ItemCategory>("other");
+  const [category, setCategory] = useState<ItemCategory>("VARIE");
   const [showCategories, setShowCategories] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -29,7 +29,7 @@ export function AddItemForm({ onAdd, suggestions }: AddItemFormProps) {
     if (!name.trim()) return;
     onAdd(name, category);
     setName("");
-    setCategory("other");
+    setCategory("VARIE");
     setShowCategories(false);
     inputRef.current?.focus();
   };

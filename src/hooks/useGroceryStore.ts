@@ -10,17 +10,16 @@ import {
 import { db } from "@/firebaseConfig";
 
 export type ItemCategory =
-  | "produce"
-  | "dairy"
-  | "meat"
-  | "bakery"
-  | "frozen"
-  | "pantry"
-  | "beverages"
-  | "snacks"
-  | "cleaning"
-  | "personal"
-  | "other";
+  | "ODORI E SPEZIE"
+  | "CARNE"
+  | "LEGUMI"
+  | "PESCE"
+  | "CASA"
+  | "VERDURA"
+  | "FRUTTA"
+  | "VARIE"
+  | "LATTICINI"
+  | "IGIENE";
 
 export interface GroceryItem {
   id: string;
@@ -40,14 +39,16 @@ export function useGroceryStore() {
         id: doc.id,
         ...doc.data(),
       })) as GroceryItem[];
-      fetchedItems.sort((a, b) => a.createdAt - b.createdAt);
+      fetchedItems.sort((a, b) =>
+        a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
+      );
       setItems(fetchedItems);
     });
     return () => unsubscribe();
   }, []);
 
   const addItem = useCallback(
-    async (name: string, category: ItemCategory = "other") => {
+    async (name: string, category: ItemCategory = "VARIE") => {
       const trimmed = name.trim();
       if (!trimmed) return;
       try {
@@ -94,15 +95,14 @@ export const CATEGORY_CONFIG: Record<
   ItemCategory,
   { label: string; emoji: string }
 > = {
-  produce: { label: "Produce", emoji: "🥬" },
-  dairy: { label: "Dairy", emoji: "🧀" },
-  meat: { label: "Meat", emoji: "🥩" },
-  bakery: { label: "Bakery", emoji: "🍞" },
-  frozen: { label: "Frozen", emoji: "🧊" },
-  pantry: { label: "Pantry", emoji: "🫙" },
-  beverages: { label: "Beverages", emoji: "🥤" },
-  snacks: { label: "Snacks", emoji: "🍿" },
-  cleaning: { label: "Cleaning", emoji: "🧹" },
-  personal: { label: "Personal", emoji: "🧴" },
-  other: { label: "Other", emoji: "📦" },
+  "ODORI E SPEZIE": { label: "Odori e Spezie", emoji: "🌿" },
+  CARNE: { label: "Carne", emoji: "🥩" },
+  LEGUMI: { label: "Legumi", emoji: "🫘" },
+  PESCE: { label: "Pesce", emoji: "🐟" },
+  CASA: { label: "Casa", emoji: "🏠" },
+  VERDURA: { label: "Verdura", emoji: "🥬" },
+  FRUTTA: { label: "Frutta", emoji: "🍎" },
+  VARIE: { label: "Varie", emoji: "📦" },
+  LATTICINI: { label: "Latticini", emoji: "🧀" },
+  IGIENE: { label: "Igiene", emoji: "🧼" },
 };

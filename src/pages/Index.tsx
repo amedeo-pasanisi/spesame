@@ -1,7 +1,12 @@
 import { useState, useMemo } from "react";
 import { Search, ShoppingCart, Home, Package, List } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useGroceryStore } from "@/hooks/useGroceryStore";
+import {
+  useGroceryStore,
+  CATEGORY_CONFIG,
+  ItemCategory,
+  GroceryItem,
+} from "@/hooks/useGroceryStore";
 import { AddItemForm } from "@/components/AddItemForm";
 import { GroceryItemCard } from "@/components/GroceryItemCard";
 
@@ -26,6 +31,19 @@ const Index = () => {
     }
     return list;
   }, [items, tab, search, isSearching]);
+
+  const groupedItems = useMemo(() => {
+    const groups = {} as Record<ItemCategory, GroceryItem[]>;
+    (Object.keys(CATEGORY_CONFIG) as ItemCategory[]).forEach((key) => {
+      groups[key] = [];
+    });
+    filtered.forEach((item) => {
+      if (groups[item.category]) {
+        groups[item.category].push(item);
+      }
+    });
+    return groups;
+  }, [filtered]);
 
   const toBuyCount = items.filter((i) => i.status === "to-buy").length;
   const atHomeCount = items.filter((i) => i.status === "at-home").length;
@@ -127,8 +145,8 @@ const Index = () => {
             Showing items matching "{search}"
           </p>
         )}
-        <AnimatePresence mode="popLayout">
-          {filtered.length === 0 ? (
+        {filtered.length === 0 ? (
+          <AnimatePresence mode="popLayout">
             <motion.div
               key="empty"
               initial={{ opacity: 0 }}
@@ -154,19 +172,36 @@ const Index = () => {
                       : "No items yet — add some above!"}
               </p>
             </motion.div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {filtered.map((item) => (
-                <GroceryItemCard
-                  key={item.id}
-                  item={item}
-                  onSetStatus={setStatus}
-                  onDelete={deleteItem}
-                />
-              ))}
-            </div>
-          )}
-        </AnimatePresence>
+          </AnimatePresence>
+        ) : (
+          <div className="flex flex-col gap-6">
+            {(
+              Object.entries(groupedItems) as [ItemCategory, GroceryItem[]][]
+            ).map(([categoryKey, categoryItems]) => {
+              if (categoryItems.length === 0) return null;
+              return (
+                <div key={categoryKey} className="flex flex-col gap-2">
+                  <h2 className="flex items-center gap-2 text-sm font-bold text-muted-foreground pl-1">
+                    <span>{CATEGORY_CONFIG[categoryKey].emoji}</span>
+                    {categoryKey}
+                  </h2>
+                  <div className="flex flex-col gap-2">
+                    <AnimatePresence mode="popLayout">
+                      {categoryItems.map((item) => (
+                        <GroceryItemCard
+                          key={item.id}
+                          item={item}
+                          onSetStatus={setStatus}
+                          onDelete={deleteItem}
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </>
   );
