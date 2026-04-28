@@ -1,4 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
+import {
+  collection,
+  onSnapshot,
+  addDoc,
+  doc,
+  updateDoc,
+  deleteDoc,
+} from "firebase/firestore";
+import { db } from "@/firebaseConfig";
 
 export type ItemCategory =
   | "produce"
@@ -21,54 +30,59 @@ export interface GroceryItem {
   createdAt: number;
 }
 
-const STORAGE_KEY = "grocery-items";
-
-function loadItems(): GroceryItem[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveItems(items: GroceryItem[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-}
-
 export function useGroceryStore() {
-  const [items, setItems] = useState<GroceryItem[]>(loadItems);
+  const [items, setItems] = useState<GroceryItem[]>([]);
 
   useEffect(() => {
-    saveItems(items);
-  }, [items]);
+    const q = collection(db, "groceryItems");
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedItems = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as GroceryItem[];
+      fetchedItems.sort((a, b) => a.createdAt - b.createdAt);
+      setItems(fetchedItems);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const addItem = useCallback(
-    (name: string, category: ItemCategory = "other") => {
+    async (name: string, category: ItemCategory = "other") => {
       const trimmed = name.trim();
       if (!trimmed) return;
-      setItems((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
+      try {
+        await addDoc(collection(db, "groceryItems"), {
           name: trimmed,
           category,
           status: "none",
           createdAt: Date.now(),
-        },
-      ]);
+        });
+      } catch (error) {
+        console.error("Error adding document: ", error);
+      }
     },
     [],
   );
 
-  const setStatus = useCallback((id: string, status: GroceryItem["status"]) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status } : item)),
-    );
-  }, []);
+  const setStatus = useCallback(
+    async (id: string, status: GroceryItem["status"]) => {
+      try {
+        const itemRef = doc(db, "groceryItems", id);
+        await updateDoc(itemRef, { status });
+      } catch (error) {
+        console.error("Error updating document: ", error);
+      }
+    },
+    [],
+  );
 
-  const deleteItem = useCallback((id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const deleteItem = useCallback(async (id: string) => {
+    try {
+      const itemRef = doc(db, "groceryItems", id);
+      await deleteDoc(itemRef);
+    } catch (error) {
+      console.error("Error deleting document: ", error);
+    }
   }, []);
 
   const allNames = items.map((i) => i.name);
