@@ -8,7 +8,11 @@ interface GroceryItemCardProps {
   onDelete: (id: string) => void;
 }
 
-export function GroceryItemCard({ item, onSetStatus, onDelete }: GroceryItemCardProps) {
+export function GroceryItemCard({
+  item,
+  onSetStatus,
+  onDelete,
+}: GroceryItemCardProps) {
   return (
     <motion.div
       layout
@@ -19,9 +23,12 @@ export function GroceryItemCard({ item, onSetStatus, onDelete }: GroceryItemCard
       className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
     >
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-card-foreground truncate">{item.name}</p>
+        <p className="text-sm font-medium text-card-foreground truncate">
+          {item.name}
+        </p>
         <p className="text-xs text-muted-foreground">
-          {CATEGORY_CONFIG[item.category].emoji} {CATEGORY_CONFIG[item.category].label}
+          {CATEGORY_CONFIG[item.category].emoji}{" "}
+          {CATEGORY_CONFIG[item.category].label}
         </p>
       </div>
 

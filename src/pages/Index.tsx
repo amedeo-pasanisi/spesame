@@ -21,7 +21,7 @@ const Index = () => {
     }
     if (isSearching) {
       list = list.filter((i) =>
-        i.name.toLowerCase().includes(search.toLowerCase())
+        i.name.toLowerCase().includes(search.toLowerCase()),
       );
     }
     return list;
@@ -39,7 +39,9 @@ const Index = () => {
             <Package className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-foreground">Grocery Tracker</h1>
+            <h1 className="text-lg font-bold text-foreground">
+              Grocery Tracker
+            </h1>
             <p className="text-xs text-muted-foreground">
               {items.length} item{items.length !== 1 ? "s" : ""} tracked
             </p>
@@ -75,9 +77,11 @@ const Index = () => {
         >
           <ShoppingCart className="h-4 w-4" />
           {toBuyCount > 0 && (
-            <span className={`rounded-full px-2 py-0.5 text-xs ${
-              tab === "to-buy" ? "bg-accent-foreground/20" : "bg-muted"
-            }`}>
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs ${
+                tab === "to-buy" ? "bg-accent-foreground/20" : "bg-muted"
+              }`}
+            >
               {toBuyCount}
             </span>
           )}
@@ -92,9 +96,11 @@ const Index = () => {
         >
           <Home className="h-4 w-4" />
           {atHomeCount > 0 && (
-            <span className={`rounded-full px-2 py-0.5 text-xs ${
-              tab === "at-home" ? "bg-primary-foreground/20" : "bg-muted"
-            }`}>
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs ${
+                tab === "at-home" ? "bg-primary-foreground/20" : "bg-muted"
+              }`}
+            >
               {atHomeCount}
             </span>
           )}
@@ -130,16 +136,22 @@ const Index = () => {
               className="flex flex-col items-center justify-center py-16 text-center"
             >
               <div className="mb-3 text-4xl">
-                {isSearching ? "🔍" : tab === "to-buy" ? "🛒" : tab === "at-home" ? "🏠" : "📋"}
+                {isSearching
+                  ? "🔍"
+                  : tab === "to-buy"
+                    ? "🛒"
+                    : tab === "at-home"
+                      ? "🏠"
+                      : "📋"}
               </div>
               <p className="text-sm font-medium text-muted-foreground">
                 {isSearching
                   ? "No items match your search"
                   : tab === "to-buy"
-                  ? "Nothing to buy right now"
-                  : tab === "at-home"
-                  ? "No items marked as at home"
-                  : "No items yet — add some above!"}
+                    ? "Nothing to buy right now"
+                    : tab === "at-home"
+                      ? "No items marked as at home"
+                      : "No items yet — add some above!"}
               </p>
             </motion.div>
           ) : (

@@ -43,26 +43,27 @@ export function useGroceryStore() {
     saveItems(items);
   }, [items]);
 
-  const addItem = useCallback((name: string, category: ItemCategory = "other") => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    setItems((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        name: trimmed,
-        category,
-        status: "none",
-        createdAt: Date.now(),
-      },
-    ]);
-  }, []);
+  const addItem = useCallback(
+    (name: string, category: ItemCategory = "other") => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      setItems((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          name: trimmed,
+          category,
+          status: "none",
+          createdAt: Date.now(),
+        },
+      ]);
+    },
+    [],
+  );
 
   const setStatus = useCallback((id: string, status: GroceryItem["status"]) => {
     setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, status } : item
-      )
+      prev.map((item) => (item.id === id ? { ...item, status } : item)),
     );
   }, []);
 
@@ -75,7 +76,10 @@ export function useGroceryStore() {
   return { items, addItem, setStatus, deleteItem, allNames };
 }
 
-export const CATEGORY_CONFIG: Record<ItemCategory, { label: string; emoji: string }> = {
+export const CATEGORY_CONFIG: Record<
+  ItemCategory,
+  { label: string; emoji: string }
+> = {
   produce: { label: "Produce", emoji: "🥬" },
   dairy: { label: "Dairy", emoji: "🧀" },
   meat: { label: "Meat", emoji: "🥩" },

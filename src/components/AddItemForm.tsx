@@ -14,12 +14,16 @@ export function AddItemForm({ onAdd, suggestions }: AddItemFormProps) {
   const [showCategories, setShowCategories] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const filtered = name.length >= 2
-    ? [...new Set(suggestions)].filter((s) =>
-        s.toLowerCase().includes(name.toLowerCase()) &&
-        s.toLowerCase() !== name.toLowerCase()
-      ).slice(0, 3)
-    : [];
+  const filtered =
+    name.length >= 2
+      ? [...new Set(suggestions)]
+          .filter(
+            (s) =>
+              s.toLowerCase().includes(name.toLowerCase()) &&
+              s.toLowerCase() !== name.toLowerCase(),
+          )
+          .slice(0, 3)
+      : [];
 
   const submit = () => {
     if (!name.trim()) return;
@@ -53,7 +57,10 @@ export function AddItemForm({ onAdd, suggestions }: AddItemFormProps) {
                 {filtered.map((s) => (
                   <button
                     key={s}
-                    onClick={() => { setName(s); inputRef.current?.focus(); }}
+                    onClick={() => {
+                      setName(s);
+                      inputRef.current?.focus();
+                    }}
                     className="block w-full px-4 py-2.5 text-left text-sm text-card-foreground hover:bg-secondary transition-colors"
                   >
                     {s}
@@ -86,21 +93,27 @@ export function AddItemForm({ onAdd, suggestions }: AddItemFormProps) {
             className="overflow-hidden"
           >
             <div className="flex flex-wrap gap-1.5 pt-3">
-              {(Object.entries(CATEGORY_CONFIG) as [ItemCategory, { label: string; emoji: string }][]).map(
-                ([key, { label, emoji }]) => (
-                  <button
-                    key={key}
-                    onClick={() => { setCategory(key); setShowCategories(false); }}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                      category === key
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-secondary-foreground"
-                    }`}
-                  >
-                    {emoji} {label}
-                  </button>
-                )
-              )}
+              {(
+                Object.entries(CATEGORY_CONFIG) as [
+                  ItemCategory,
+                  { label: string; emoji: string },
+                ][]
+              ).map(([key, { label, emoji }]) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    setCategory(key);
+                    setShowCategories(false);
+                  }}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                    category === key
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground"
+                  }`}
+                >
+                  {emoji} {label}
+                </button>
+              ))}
             </div>
           </motion.div>
         )}
