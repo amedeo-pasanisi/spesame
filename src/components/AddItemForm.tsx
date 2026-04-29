@@ -29,7 +29,6 @@ export function AddItemForm({ onAdd, suggestions }: AddItemFormProps) {
     if (!name.trim()) return;
     onAdd(name, category);
     setName("");
-    setCategory("VARIE");
     setShowCategories(false);
     inputRef.current?.focus();
   };
