@@ -1,5 +1,12 @@
 import { useState, useMemo } from "react";
-import { Search, ShoppingCart, Home, Package, List } from "lucide-react";
+import {
+  Search,
+  ShoppingCart,
+  Home,
+  Package,
+  List,
+  ChevronDown,
+} from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   useGroceryStore,
@@ -16,6 +23,9 @@ const Index = () => {
   const { items, addItem, setStatus, deleteItem, allNames } = useGroceryStore();
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
+  const [collapsedCategories, setCollapsedCategories] = useState<
+    Record<string, boolean>
+  >({});
 
   const isSearching = search.trim().length > 0;
 
@@ -44,6 +54,13 @@ const Index = () => {
     });
     return groups;
   }, [filtered]);
+
+  const toggleCategory = (categoryKey: string) => {
+    setCollapsedCategories((prev) => ({
+      ...prev,
+      [categoryKey]: !prev[categoryKey],
+    }));
+  };
 
   const toBuyCount = items.filter((i) => i.status === "to-buy").length;
   const atHomeCount = items.filter((i) => i.status === "at-home").length;
@@ -179,24 +196,53 @@ const Index = () => {
               Object.entries(groupedItems) as [ItemCategory, GroceryItem[]][]
             ).map(([categoryKey, categoryItems]) => {
               if (categoryItems.length === 0) return null;
+              const isCollapsed = collapsedCategories[categoryKey] || false;
               return (
-                <div key={categoryKey} className="flex flex-col gap-2">
-                  <h2 className="flex items-center gap-2 text-sm font-bold text-muted-foreground pl-1">
-                    <span>{CATEGORY_CONFIG[categoryKey].emoji}</span>
-                    {categoryKey}
-                  </h2>
-                  <div className="flex flex-col gap-2">
-                    <AnimatePresence mode="popLayout">
-                      {categoryItems.map((item) => (
-                        <GroceryItemCard
-                          key={item.id}
-                          item={item}
-                          onSetStatus={setStatus}
-                          onDelete={deleteItem}
-                        />
-                      ))}
-                    </AnimatePresence>
-                  </div>
+                <div key={categoryKey} className="flex flex-col gap-1">
+                  {/* Clickable Header */}
+                  <button
+                    onClick={() => toggleCategory(categoryKey)}
+                    className="flex w-full items-center justify-between py-2 text-left transition-opacity hover:opacity-80"
+                  >
+                    <h2 className="flex items-center gap-2 text-sm font-bold text-muted-foreground pl-1">
+                      <span>{CATEGORY_CONFIG[categoryKey].emoji}</span>
+                      {categoryKey}
+                      <span className="ml-1 text-xs font-normal text-muted-foreground/60">
+                        ({categoryItems.length})
+                      </span>
+                    </h2>
+                    <ChevronDown
+                      className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+                        isCollapsed ? "-rotate-90" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {/* Collapsible Content Area */}
+                  <AnimatePresence initial={false}>
+                    {!isCollapsed && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="flex flex-col gap-2 pt-1 pb-2">
+                          <AnimatePresence mode="popLayout">
+                            {categoryItems.map((item) => (
+                              <GroceryItemCard
+                                key={item.id}
+                                item={item}
+                                onSetStatus={setStatus}
+                                onDelete={deleteItem}
+                              />
+                            ))}
+                          </AnimatePresence>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               );
             })}
