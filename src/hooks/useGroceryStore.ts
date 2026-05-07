@@ -25,7 +25,8 @@ export interface GroceryItem {
   id: string;
   name: string;
   category: ItemCategory;
-  status: "at-home" | "to-buy" | "none";
+  inCart: boolean;
+  atHome: boolean;
   createdAt: number;
 }
 
@@ -35,10 +36,23 @@ export function useGroceryStore() {
   useEffect(() => {
     const q = collection(db, "groceryItems");
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedItems = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as GroceryItem[];
+      const fetchedItems = snapshot.docs.map((docItem) => {
+        const data = docItem.data();
+        const inCart =
+          data.inCart !== undefined ? data.inCart : data.status === "to-buy";
+        const atHome =
+          data.atHome !== undefined ? data.atHome : data.status === "at-home";
+
+        return {
+          id: docItem.id,
+          name: data.name,
+          category: data.category,
+          inCart,
+          atHome,
+          createdAt: data.createdAt,
+        };
+      }) as GroceryItem[];
+
       fetchedItems.sort((a, b) =>
         a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
       );
@@ -55,7 +69,8 @@ export function useGroceryStore() {
         await addDoc(collection(db, "groceryItems"), {
           name: trimmed,
           category,
-          status: "none",
+          inCart: false,
+          atHome: false,
           createdAt: Date.now(),
         });
       } catch (error) {
@@ -65,11 +80,11 @@ export function useGroceryStore() {
     [],
   );
 
-  const setStatus = useCallback(
-    async (id: string, status: GroceryItem["status"]) => {
+  const updateItem = useCallback(
+    async (id: string, updates: Partial<GroceryItem>) => {
       try {
         const itemRef = doc(db, "groceryItems", id);
-        await updateDoc(itemRef, { status });
+        await updateDoc(itemRef, updates);
       } catch (error) {
         console.error("Error updating document: ", error);
       }
@@ -88,7 +103,7 @@ export function useGroceryStore() {
 
   const allNames = items.map((i) => i.name);
 
-  return { items, addItem, setStatus, deleteItem, allNames };
+  return { items, addItem, updateItem, deleteItem, allNames };
 }
 
 export const CATEGORY_CONFIG: Record<

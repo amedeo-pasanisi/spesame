@@ -6,6 +6,7 @@ import {
   Package,
   List,
   ChevronDown,
+  X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -20,7 +21,8 @@ import { GroceryItemCard } from "@/components/GroceryItemCard";
 type Tab = "to-buy" | "at-home" | "all";
 
 const Index = () => {
-  const { items, addItem, setStatus, deleteItem, allNames } = useGroceryStore();
+  const { items, addItem, updateItem, deleteItem, allNames } =
+    useGroceryStore();
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [collapsedCategories, setCollapsedCategories] = useState<
@@ -31,8 +33,9 @@ const Index = () => {
 
   const filtered = useMemo(() => {
     let list = items;
-    if (!isSearching && tab !== "all") {
-      list = items.filter((i) => i.status === tab);
+    if (!isSearching) {
+      if (tab === "to-buy") list = items.filter((i) => i.inCart);
+      if (tab === "at-home") list = items.filter((i) => i.atHome);
     }
     if (isSearching) {
       list = list.filter((i) =>
@@ -62,11 +65,29 @@ const Index = () => {
     }));
   };
 
-  const toBuyCount = items.filter((i) => i.status === "to-buy").length;
-  const atHomeCount = items.filter((i) => i.status === "at-home").length;
+  const activeCategories = (Object.keys(groupedItems) as ItemCategory[]).filter(
+    (key) => groupedItems[key].length > 0,
+  );
+  const areAllCollapsed =
+    activeCategories.length > 0 &&
+    activeCategories.every((key) => collapsedCategories[key]);
+  const toggleCollapseAll = () => {
+    if (areAllCollapsed) {
+      setCollapsedCategories({});
+    } else {
+      const newState: Record<string, boolean> = { ...collapsedCategories };
+      activeCategories.forEach((key) => {
+        newState[key] = true;
+      });
+      setCollapsedCategories(newState);
+    }
+  };
+
+  const toBuyCount = items.filter((i) => i.inCart).length;
+  const atHomeCount = items.filter((i) => i.atHome).length;
 
   return (
-    <>
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
       {/* Header */}
       <header className="px-4 pt-6 pb-2">
         <div className="flex items-center gap-3">
@@ -150,18 +171,45 @@ const Index = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search items..."
-            className="w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-10 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
+          {/* Clear Button */}
+          {search.length > 0 && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
+        {filtered.length > 0 && (
+          <div className="mt-3 flex items-center justify-between">
+            {isSearching ? (
+              <p className="text-xs text-muted-foreground">
+                Showing items matching "{search}"
+              </p>
+            ) : (
+              <div />
+            )}
+            <button
+              onClick={toggleCollapseAll}
+              className="flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {areAllCollapsed ? "Expand All" : "Collapse All"}
+              <ChevronDown
+                className={`h-3 w-3 transition-transform duration-200 ${
+                  areAllCollapsed ? "" : "rotate-180"
+                }`}
+              />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto px-4 pb-6">
-        {isSearching && (
-          <p className="mb-2 text-xs text-muted-foreground">
-            Showing items matching "{search}"
-          </p>
-        )}
+      <div className="flex-1 overflow-y-auto px-4 pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {filtered.length === 0 ? (
           <AnimatePresence mode="popLayout">
             <motion.div
@@ -234,7 +282,7 @@ const Index = () => {
                               <GroceryItemCard
                                 key={item.id}
                                 item={item}
-                                onSetStatus={setStatus}
+                                onUpdate={updateItem}
                                 onDelete={deleteItem}
                               />
                             ))}
@@ -249,7 +297,7 @@ const Index = () => {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 };
 
