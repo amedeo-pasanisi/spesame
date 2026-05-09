@@ -7,6 +7,7 @@ import {
   List,
   ChevronDown,
   X,
+  LogOut,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -17,12 +18,16 @@ import {
 } from "@/hooks/useGroceryStore";
 import { AddItemForm } from "@/components/AddItemForm";
 import { GroceryItemCard } from "@/components/GroceryItemCard";
+import { signOut } from "firebase/auth";
+import { auth } from "@/firebaseConfig";
+import { useAuth } from "@/hooks/useAuth";
 
 type Tab = "to-buy" | "at-home" | "all";
 
 const Index = () => {
   const { items, addItem, updateItem, deleteItem, allNames } =
     useGroceryStore();
+  const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [collapsedCategories, setCollapsedCategories] = useState<
@@ -102,6 +107,15 @@ const Index = () => {
               {items.length} item{items.length !== 1 ? "s" : ""} tracked
             </p>
           </div>
+          {user && (
+            <button
+              onClick={() => signOut(auth)}
+              className="ml-auto flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+              aria-label="Sign out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </header>
 
