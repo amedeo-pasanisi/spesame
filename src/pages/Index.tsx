@@ -8,6 +8,8 @@ import {
   ChevronDown,
   X,
   LogOut,
+  Share2,
+  Users,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -21,13 +23,31 @@ import { GroceryItemCard } from "@/components/GroceryItemCard";
 import { signOut } from "firebase/auth";
 import { auth } from "@/firebaseConfig";
 import { useAuth } from "@/hooks/useAuth";
+import { useSharesWithMe } from "@/hooks/useShares";
+import { ShareDialog } from "@/components/ShareDialog";
 
 type Tab = "to-buy" | "at-home" | "all";
 
 const Index = () => {
-  const { items, addItem, updateItem, deleteItem, allNames } =
-    useGroceryStore();
   const { user } = useAuth();
+  const sharedWithMe = useSharesWithMe();
+  const [activeOwnerId, setActiveOwnerId] = useState<string | null>(null);
+  const [showListPicker, setShowListPicker] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+
+  // The list currently being viewed
+  const ownerId = activeOwnerId ?? user?.uid ?? "";
+  const isOwnList = !activeOwnerId || activeOwnerId === user?.uid;
+  const activeShare = sharedWithMe.find((s) => s.ownerId === activeOwnerId);
+  const permission = isOwnList
+    ? "edit-full"
+    : (activeShare?.permission ?? "view");
+  const canEditStatus = permission !== "view";
+  const canEditFull = permission === "edit-full";
+
+  const { items, addItem, updateItem, deleteItem, allNames } =
+    useGroceryStore(ownerId);
+
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [collapsedCategories, setCollapsedCategories] = useState<
@@ -91,6 +111,10 @@ const Index = () => {
   const toBuyCount = items.filter((i) => i.inCart).length;
   const atHomeCount = items.filter((i) => i.atHome).length;
 
+  const activeListLabel = isOwnList
+    ? "My list"
+    : (activeShare?.ownerEmail ?? "Shared list");
+
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
       {/* Header */}
@@ -99,18 +123,91 @@ const Index = () => {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Package className="h-5 w-5" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-foreground">
-              Grocery Tracker
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              {items.length} item{items.length !== 1 ? "s" : ""} tracked
+          <div className="min-w-0 flex-1 relative">
+            <button
+              onClick={() => setShowListPicker((v) => !v)}
+              className="flex items-center gap-1 max-w-full"
+            >
+              <h1 className="text-lg font-bold text-foreground truncate">
+                {activeListLabel}
+              </h1>
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+                  showListPicker ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            <p className="text-xs text-muted-foreground truncate">
+              {items.length} item{items.length !== 1 ? "s" : ""}
+              {!isOwnList && ` · ${permission.replace("-", " ")}`}
             </p>
+            <AnimatePresence>
+              {showListPicker && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  className="absolute left-0 top-full z-20 mt-2 w-64 rounded-xl border border-border bg-card shadow-lg overflow-hidden"
+                >
+                  <button
+                    onClick={() => {
+                      setActiveOwnerId(null);
+                      setShowListPicker(false);
+                    }}
+                    className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors hover:bg-secondary ${
+                      isOwnList ? "bg-secondary" : ""
+                    }`}
+                  >
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                    <span className="flex-1 truncate text-card-foreground">
+                      My list
+                    </span>
+                  </button>
+                  {sharedWithMe.length > 0 && (
+                    <div className="border-t border-border">
+                      <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        Shared with me
+                      </p>
+                      {sharedWithMe.map((s) => (
+                        <button
+                          key={s.id}
+                          onClick={() => {
+                            setActiveOwnerId(s.ownerId);
+                            setShowListPicker(false);
+                          }}
+                          className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors hover:bg-secondary ${
+                            activeOwnerId === s.ownerId ? "bg-secondary" : ""
+                          }`}
+                        >
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span className="flex-1 truncate text-card-foreground">
+                            {s.ownerEmail}
+                          </span>
+                          <span className="shrink-0 text-[10px] text-muted-foreground">
+                            {s.permission.replace("-", " ")}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
+          {isOwnList && (
+            <button
+              onClick={() => setShareOpen(true)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+              aria-label="Share list"
+              title="Share list"
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
+          )}
           {user && (
             <button
               onClick={() => signOut(auth)}
-              className="ml-auto flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
               aria-label="Sign out"
             >
               <LogOut className="h-4 w-4" />
@@ -119,10 +216,12 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Add Item */}
-      <div className="pt-3">
-        <AddItemForm onAdd={addItem} suggestions={allNames} />
-      </div>
+      {/* Add Item — only when allowed */}
+      {canEditFull && (
+        <div className="pt-3">
+          <AddItemForm onAdd={addItem} suggestions={allNames} />
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-2 px-4 pb-2">
@@ -298,6 +397,8 @@ const Index = () => {
                                 item={item}
                                 onUpdate={updateItem}
                                 onDelete={deleteItem}
+                                canEditStatus={canEditStatus}
+                                canEditFull={canEditFull}
                               />
                             ))}
                           </AnimatePresence>
@@ -311,6 +412,7 @@ const Index = () => {
           </div>
         )}
       </div>
+      <ShareDialog open={shareOpen} onOpenChange={setShareOpen} />
     </div>
   );
 };

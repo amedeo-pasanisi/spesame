@@ -7,7 +7,8 @@ import {
   ReactNode,
 } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/firebaseConfig";
+import { auth, db } from "@/firebaseConfig";
+import { doc, setDoc } from "firebase/firestore";
 
 interface AuthContextValue {
   user: User | null;
@@ -24,9 +25,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       setLoading(false);
+      // Register/refresh user profile so others can share lists with us by email
+      if (u?.email) {
+        try {
+          await setDoc(
+            doc(db, "userProfiles", u.uid),
+            { uid: u.uid, email: u.email.toLowerCase() },
+            { merge: true },
+          );
+        } catch (err) {
+          console.error("Failed to upsert user profile", err);
+        }
+      }
     });
     return () => unsub();
   }, []);

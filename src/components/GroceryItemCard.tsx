@@ -7,10 +7,21 @@ interface GroceryItemCardProps {
   item: GroceryItem;
   onUpdate: (id: string, updates: Partial<GroceryItem>) => void;
   onDelete: (id: string) => void;
+  canEditStatus?: boolean;
+  canEditFull?: boolean;
 }
 
 export const GroceryItemCard = forwardRef<HTMLDivElement, GroceryItemCardProps>(
-  ({ item, onUpdate, onDelete }, ref) => {
+  (
+    {
+      item,
+      onUpdate,
+      onDelete,
+      canEditStatus = true,
+      canEditFull = true,
+    },
+    ref,
+  ) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(item.name);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -53,7 +64,7 @@ export const GroceryItemCard = forwardRef<HTMLDivElement, GroceryItemCardProps>(
         className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
       >
         <div className="flex-1 min-w-0">
-          {isEditing ? (
+          {isEditing && canEditFull ? (
             <input
               ref={inputRef}
               value={editName}
@@ -64,9 +75,11 @@ export const GroceryItemCard = forwardRef<HTMLDivElement, GroceryItemCardProps>(
             />
           ) : (
             <p
-              onClick={() => setIsEditing(true)}
-              className="text-sm font-medium text-card-foreground truncate cursor-pointer hover:opacity-70 transition-opacity"
-              title="Click to edit"
+              onClick={() => canEditFull && setIsEditing(true)}
+              className={`text-sm font-medium text-card-foreground truncate transition-opacity ${
+                canEditFull ? "cursor-pointer hover:opacity-70" : ""
+              }`}
+              title={canEditFull ? "Click to edit" : undefined}
             >
               {item.name}
             </p>
@@ -76,12 +89,15 @@ export const GroceryItemCard = forwardRef<HTMLDivElement, GroceryItemCardProps>(
         <div className="flex items-center gap-1.5">
           {/* Cart Toggle */}
           <button
-            onClick={() => onUpdate(item.id, { inCart: !item.inCart })}
+            onClick={() =>
+              canEditStatus && onUpdate(item.id, { inCart: !item.inCart })
+            }
+            disabled={!canEditStatus}
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
               item.inCart
                 ? "bg-to-buy/15 text-to-buy"
                 : "text-muted-foreground hover:bg-muted"
-            }`}
+            } ${!canEditStatus ? "opacity-60 cursor-not-allowed" : ""}`}
             title={item.inCart ? "Remove from cart" : "Add to cart"}
           >
             <ShoppingCart className="h-4 w-4" />
@@ -89,25 +105,30 @@ export const GroceryItemCard = forwardRef<HTMLDivElement, GroceryItemCardProps>(
 
           {/* Home Toggle */}
           <button
-            onClick={() => onUpdate(item.id, { atHome: !item.atHome })}
+            onClick={() =>
+              canEditStatus && onUpdate(item.id, { atHome: !item.atHome })
+            }
+            disabled={!canEditStatus}
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
               item.atHome
                 ? "bg-at-home/15 text-at-home"
                 : "text-muted-foreground hover:bg-muted"
-            }`}
+            } ${!canEditStatus ? "opacity-60 cursor-not-allowed" : ""}`}
             title={item.atHome ? "Remove from home" : "Add to home"}
           >
             <Home className="h-4 w-4" />
           </button>
 
           {/* Delete permanently */}
-          <button
-            onClick={() => onDelete(item.id)}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-            title="Delete item"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+          {canEditFull && (
+            <button
+              onClick={() => onDelete(item.id)}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+              title="Delete item"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </motion.div>
     );

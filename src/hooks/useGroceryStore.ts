@@ -34,18 +34,19 @@ export interface GroceryItem {
   userId: string;
 }
 
-export function useGroceryStore() {
+export function useGroceryStore(ownerId?: string) {
   const [items, setItems] = useState<GroceryItem[]>([]);
   const { user } = useAuth();
+  const effectiveOwnerId = ownerId ?? user?.uid;
 
   useEffect(() => {
-    if (!user) {
+    if (!effectiveOwnerId) {
       setItems([]);
       return;
     }
     const q = query(
       collection(db, "groceryItems"),
-      where("userId", "==", user.uid),
+      where("userId", "==", effectiveOwnerId),
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -68,12 +69,12 @@ export function useGroceryStore() {
       setItems(fetchedItems);
     });
     return () => unsubscribe();
-  }, [user]);
+  }, [effectiveOwnerId]);
 
   const addItem = useCallback(
     async (name: string, category: ItemCategory = "VARIE") => {
       const trimmed = name.trim();
-      if (!trimmed || !user) return;
+      if (!trimmed || !effectiveOwnerId) return;
       try {
         await addDoc(collection(db, "groceryItems"), {
           name: trimmed,
@@ -81,13 +82,13 @@ export function useGroceryStore() {
           inCart: false,
           atHome: false,
           createdAt: Date.now(),
-          userId: user.uid,
+          userId: effectiveOwnerId,
         });
       } catch (error) {
         console.error("Error adding document: ", error);
       }
     },
-    [user],
+    [effectiveOwnerId],
   );
 
   const updateItem = useCallback(
