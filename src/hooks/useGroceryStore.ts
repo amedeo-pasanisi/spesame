@@ -6,8 +6,11 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  query,
+  where,
 } from "firebase/firestore";
 import { db } from "@/firebaseConfig";
+import { useAuth } from "@/hooks/useAuth";
 
 export type ItemCategory =
   | "ODORI E SPEZIE"
@@ -28,28 +31,34 @@ export interface GroceryItem {
   inCart: boolean;
   atHome: boolean;
   createdAt: number;
+  userId: string;
 }
 
 export function useGroceryStore() {
   const [items, setItems] = useState<GroceryItem[]>([]);
+  const { user } = useAuth();
 
   useEffect(() => {
-    const q = collection(db, "groceryItems");
+    if (!user) {
+      setItems([]);
+      return;
+    }
+    const q = query(
+      collection(db, "groceryItems"),
+      where("userId", "==", user.uid),
+    );
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedItems = snapshot.docs.map((docItem) => {
         const data = docItem.data();
-        const inCart =
-          data.inCart !== undefined ? data.inCart : data.status === "to-buy";
-        const atHome =
-          data.atHome !== undefined ? data.atHome : data.status === "at-home";
-
         return {
           id: docItem.id,
           name: data.name,
           category: data.category,
-          inCart,
-          atHome,
+          inCart: data.inCart,
+          atHome: data.atHome,
           createdAt: data.createdAt,
+          userId: data.userId,
         };
       }) as GroceryItem[];
 
@@ -59,12 +68,12 @@ export function useGroceryStore() {
       setItems(fetchedItems);
     });
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   const addItem = useCallback(
     async (name: string, category: ItemCategory = "VARIE") => {
       const trimmed = name.trim();
-      if (!trimmed) return;
+      if (!trimmed || !user) return;
       try {
         await addDoc(collection(db, "groceryItems"), {
           name: trimmed,
@@ -72,12 +81,13 @@ export function useGroceryStore() {
           inCart: false,
           atHome: false,
           createdAt: Date.now(),
+          userId: user.uid,
         });
       } catch (error) {
         console.error("Error adding document: ", error);
       }
     },
-    [],
+    [user],
   );
 
   const updateItem = useCallback(
