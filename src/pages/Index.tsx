@@ -10,6 +10,7 @@ import {
   LogOut,
   Share2,
   Users,
+  Copy,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -25,6 +26,7 @@ import { auth } from "@/firebaseConfig";
 import { useAuth } from "@/hooks/useAuth";
 import { useSharesWithMe } from "@/hooks/useShares";
 import { ShareDialog } from "@/components/ShareDialog";
+import { toast } from "sonner";
 
 type Tab = "to-buy" | "at-home" | "all";
 
@@ -115,6 +117,33 @@ const Index = () => {
     ? "My list"
     : (activeShare?.ownerEmail ?? "Shared list");
 
+  const handleCopyList = async () => {
+    try {
+      let text = "";
+      if (tab === "to-buy") text += "🛒 *Lista della spesa*\n\n";
+      else if (tab === "at-home") text += "🏠 *Prodotti a casa*\n\n";
+      else text += "📋 *Lista completa*\n\n";
+      if (isSearching) text += `(Risultati per: "${search}")\n\n`;
+      (Object.entries(groupedItems) as [ItemCategory, GroceryItem[]][]).forEach(
+        ([categoryKey, categoryItems]) => {
+          if (categoryItems.length > 0) {
+            const { emoji, label } = CATEGORY_CONFIG[categoryKey];
+            text += `${emoji} *${label}*\n`;
+            categoryItems.forEach((item) => {
+              text += `  • ${item.name}\n`;
+            });
+            text += "\n";
+          }
+        },
+      );
+      await navigator.clipboard.writeText(text.trim());
+      toast.success("List copied to clipboard!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Copy failed. Please try again.");
+    }
+  };
+
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
       {/* Header */}
@@ -202,6 +231,16 @@ const Index = () => {
               title="Share list"
             >
               <Share2 className="h-4 w-4" />
+            </button>
+          )}
+          {canEditStatus && filtered.length > 0 && (
+            <button
+              onClick={handleCopyList}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+              aria-label="Copy list"
+              title="Copy list"
+            >
+              <Copy className="h-4 w-4" />
             </button>
           )}
           {user && (
