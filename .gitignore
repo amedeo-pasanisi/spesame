@@ -27,3 +27,7 @@ dist-ssr
 .env
 # TypeScript cache
 *.tsbuildinfo
+
+DIARIO.*
+# Symlinks with absolute paths, created by the Firebase agent skills installer
+.claude/skills
